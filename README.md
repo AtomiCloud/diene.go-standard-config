@@ -1,0 +1,143 @@
+# Diene Go standard-config library
+
+<!-- ### go-base-badges -->
+<!-- #### source: go-base -->
+
+[![CI](https://github.com/AtomiCloud/diene.go-standard-config/actions/workflows/ci.yaml/badge.svg)](https://github.com/AtomiCloud/diene.go-standard-config/actions/workflows/ci.yaml)
+[![Unit coverage](https://codecov.io/gh/AtomiCloud/diene.go-standard-config/branch/main/graph/badge.svg?flag=unit)](https://codecov.io/gh/AtomiCloud/diene.go-standard-config)
+[![Integration coverage](https://codecov.io/gh/AtomiCloud/diene.go-standard-config/branch/main/graph/badge.svg?flag=int)](https://codecov.io/gh/AtomiCloud/diene.go-standard-config)
+[![Meta coverage](https://codecov.io/gh/AtomiCloud/diene.go-standard-config/branch/main/graph/badge.svg?flag=meta)](https://codecov.io/gh/AtomiCloud/diene.go-standard-config)
+[![Go Reference](https://pkg.go.dev/badge/github.com/AtomiCloud/diene.go-standard-config.svg)](https://pkg.go.dev/github.com/AtomiCloud/diene.go-standard-config)
+[![Commit activity](https://img.shields.io/github/commit-activity/m/AtomiCloud/diene.go-standard-config)](https://github.com/AtomiCloud/diene.go-standard-config/commits/main)
+
+<!-- ### nix-root -->
+<!-- #### source: main -->
+
+Diene's reproducible development environment is managed by Nix. Run `direnv allow` once, then use `pls` tasks from the loaded shell.
+
+<!-- ### workspace -->
+<!-- #### source: workspace -->
+
+This repository inherits the all-features workspace baseline: split CI/CD,
+secrets, release configuration, validators, standards, and vendored agent-skill
+synchronization.
+
+## Commands
+
+- `pls setup` — synchronize installed diene package skills.
+- `pls lint` — run every pre-commit gate.
+- `pls secret:scan` — scan tracked content for secrets.
+- `pls skills:sync` — rebuild `.claude/skills/vendor/` from installed packages.
+
+<!-- ### go-lib -->
+<!-- #### source: go-lib -->
+
+## Publishable Go module
+
+`github.com/AtomiCloud/diene.go-standard-config` ships the Diene infrastructure
+configuration presets: the four frozen infra blocks of C0 §3 — `postgres`,
+`cache`, `kv`, and `storage` — as draft-2020-12 JSON Schema fragments, plus the
+Testcontainers glue that boots each one and emits the matching config block.
+
+It ships **presets only**. It never loads, merges, or validates a configuration
+document: `github.com/AtomiCloud/diene.go-config` is the sole merger and
+validator. A service composes its own root schema from the engine blocks it uses
+(otel, auth-engine, api-engine), the infra presets it needs from here, and its
+own keys. There is no one-call bootstrap.
+
+```bash
+go get github.com/AtomiCloud/diene.go-standard-config@latest
+```
+
+```go
+schema := config.ComposeSchema(
+    config.AppBlockSchema(),
+    config.NewBlock(otel.BlockKey, false, otel.JSONSchema()),
+    config.NewBlock(standardconfig.PostgresBlockKey, true, standardconfig.PostgresSchema()),
+)
+```
+
+Packages:
+
+- `lib/standardconfig` — the four preset fragments, the typed entries they
+  decode into, the keyed multi-instance helpers, and the problem catalog.
+- `testhelper` — per-preset Testcontainers start helpers that emit a
+  schema-valid keyed block, container-free block fakes for unit tiers, and
+  fail-fast assertions.
+
+Each preset is a KEYED MAP of named connections, so a second Postgres pool or a
+second bucket is a YAML entry rather than a schema change. Connection names are
+authored UPPERCASE (R14); the config loader canonicalizes key spelling, so
+`standardconfig.Named` resolves them case-insensitively and
+`standardconfig.ValidateKeys` enforces the half of the contract that survives
+loading. Secrets are blank in YAML and injected per landscape through the
+environment override tier.
+
+The preset shapes, the keyed multi-instance contract, and the composition
+boundary are documented on the packages themselves and in the shipped usage
+skill `skills/diene-go-standard-config-usage/SKILL.md`.
+
+<!-- ### go-base-commands -->
+<!-- #### source: go-base -->
+
+## Go commands
+
+- `pls build` — build every package in the module.
+- `pls typecheck` — compile every source package without running tests.
+- `pls test` / `pls test:coverage` — run unit, integration, and active meta tiers.
+- `pls deadcode` — run strict whole-repository and production passes plus the LLM-lax report.
+- `pls up` / `pls down` — start or stop local infrastructure (this library binds none of its own).
+- `./scripts/ci/pkg-validate.sh all` — run module-path, vet, API, docs, and example validators.
+
+See the [Go baseline](docs/developer/go-baseline.md) for the language contract and
+template-maintenance boundary.
+See the [Go library baseline](docs/developer/go-lib-baseline.md) for promotion,
+testing, compatibility, and publication policy.
+
+## Standards
+
+- [CI/CD workflows](docs/standards/ci-cd/index.md)
+- [conventional commits](docs/standards/conventional-commits/index.md)
+- [Infisical and secrets](docs/standards/infisical/index.md)
+- [linting and pre-commit](docs/standards/linting/index.md)
+- [Nix flakes and development shells](docs/standards/nix/index.md)
+- [release automation](docs/standards/semantic-release/index.md)
+- [service-tree identity](docs/standards/service-tree/index.md)
+- [shell scripts](docs/standards/shell-scripts/index.md)
+- [Taskfile conventions](docs/standards/taskfile/index.md)
+
+<!-- ### shared -->
+<!-- #### source: shared -->
+
+## Shared standards
+
+- [Authorization](docs/standards/authorization/index.md)
+- [Contributor documentation](docs/standards/contributor-docs/index.md)
+- [Date and time](docs/standards/datetime/index.md)
+- [Domain-driven design](docs/standards/domain-driven-design/index.md)
+- [Functional practices](docs/standards/functional-practices/index.md)
+- [Software design philosophy](docs/standards/software-design-philosophy/index.md)
+- [SOLID principles](docs/standards/solid-principles/index.md)
+- [Stateless OOP and dependency injection](docs/standards/stateless-oop-di/index.md)
+- [Testing](docs/standards/testing/index.md)
+- [Three-layer architecture](docs/standards/three-layer-architecture/index.md)
+- [Utility libraries](docs/standards/utilities/index.md)
+- [Data validation](docs/standards/validation/index.md)
+
+Domain-specific documentation belongs under [docs/domain/](docs/domain/README.md).
+The `docs/standards/contracts/` location is reserved for the separately owned C0
+contracts standard.
+
+<!-- ### go-base-language-standards -->
+<!-- #### source: go-base -->
+
+## Go language variants
+
+- [Date and time](docs/standards/datetime/languages/go.md)
+- [Domain-driven design](docs/standards/domain-driven-design/languages/go.md)
+- [Functional practices](docs/standards/functional-practices/languages/go.md)
+- [SOLID principles](docs/standards/solid-principles/languages/go.md)
+- [Stateless OOP and dependency injection](docs/standards/stateless-oop-di/languages/go.md)
+- [Testing](docs/standards/testing/languages/go.md)
+- [Utilities](docs/standards/utilities/languages/go.md)
+- [Validation](docs/standards/validation/languages/go.md)
